@@ -1,0 +1,246 @@
+import sys
+import mysql.connector
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QLabel, QLineEdit, QPushButton,
+    QVBoxLayout, QHBoxLayout, QMessageBox, QSpacerItem, QSizePolicy, QFrame
+)
+from PyQt6.QtGui import QPixmap, QFont, QColor
+from PyQt6.QtCore import Qt
+
+# --------------------- Dashboard Principal ---------------------
+class Dashboard(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Dashboard ICI")
+        self.setMinimumSize(1000, 600)
+        self.setStyleSheet("background-color: #f8f9fa;")
+
+        layout_main = QHBoxLayout(self)
+
+        # Menú lateral
+        menu = QFrame()
+        menu.setFixedWidth(200)
+        menu.setStyleSheet("background-color: white; border-right: 1px solid #ddd;")
+        menu_layout = QVBoxLayout(menu)
+
+        logo = QLabel()
+        logo.setPixmap(QPixmap("ICI_logo(login).png").scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio))
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        menu_layout.addWidget(logo)
+        menu_layout.addSpacing(20)
+
+        btn_general = QPushButton("🏠 Vista general")
+        btn_usuario = QPushButton("👤 Mi usuario")
+        btn_logout = QPushButton("🚪 Logout")
+        for btn in (btn_general, btn_usuario, btn_logout):
+            btn.setStyleSheet("text-align: left; padding: 10px; font-size: 14px; background-color: none; border: none;")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            menu_layout.addWidget(btn)
+
+        menu_layout.addStretch()
+        label_footer = QLabel("Esta aplicación ha sido construida por Koders, S.A. de C.V.")
+        label_footer.setWordWrap(True)
+        label_footer.setStyleSheet("font-size: 10px; color: gray; padding: 10px;")
+        menu_layout.addWidget(label_footer)
+
+        # Contenido principal
+        contenido = QVBoxLayout()
+
+        titulo = QLabel("Hola, Alvin 👋")
+        titulo.setFont(QFont("Arial", 20, QFont.Weight.Bold))
+        subtitulo = QLabel("Bienvenido a tu dashboard de ventas del mes")
+        subtitulo.setFont(QFont("Arial", 12))
+
+        contenido.addWidget(titulo)
+        contenido.addWidget(subtitulo)
+
+        # Widget de Proveedores
+        proveedores = self.widget_proveedores()
+        contenido.addWidget(proveedores)
+
+        contenido.addStretch()
+
+        layout_main.addWidget(menu)
+        layout_main.addLayout(contenido)
+
+    def widget_proveedores(self):
+        frame = QFrame()
+        frame.setStyleSheet("background-color: white; border-radius: 20px; padding: 20px;")
+        frame.setFixedSize(300, 200)
+
+        layout = QVBoxLayout(frame)
+
+        label_sup = QLabel("👥 Proveedores actuales")
+        label_sup.setStyleSheet("color: gray; font-size: 12px;")
+        layout.addWidget(label_sup)
+
+        nombre = QLabel("Vidri\nFreund")
+        nombre.setFont(QFont("Arial", 24, QFont.Weight.Bold))
+        layout.addWidget(nombre)
+
+        boton = QPushButton("Agregar")
+        boton.setStyleSheet("""
+            QPushButton {
+                background-color: #1e40ff;
+                color: white;
+                padding: 8px 20px;
+                border-radius: 10px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0034c2;
+            }
+        """)
+        boton.setFixedWidth(100)
+        layout.addWidget(boton, alignment=Qt.AlignmentFlag.AlignRight)
+
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet("color: lightgray;")
+        layout.addWidget(separator)
+
+        avatars = QHBoxLayout()
+        for _ in range(5):
+            avatar = QLabel()
+            pixmap = QPixmap(40, 40)
+            pixmap.fill(QColor("#ccc"))
+            avatar.setPixmap(pixmap)
+            avatar.setFixedSize(40, 40)
+            avatar.setStyleSheet("border-radius: 20px;")
+            avatars.addWidget(avatar)
+
+        boton_mas = QLabel("➕")
+        boton_mas.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        boton_mas.setFixedSize(40, 40)
+        boton_mas.setStyleSheet("background-color: black; color: white; border-radius: 20px; font-size: 20px;")
+        avatars.addWidget(boton_mas)
+
+        layout.addLayout(avatars)
+
+        return frame
+
+
+# --------------------- Login ---------------------
+class Login(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Login ICI")
+        self.setGeometry(100, 100, 700, 400)
+        self.setStyleSheet("background-color: #f0f2f5;")
+
+        layout_principal = QHBoxLayout()
+
+        # Logo izquierda
+        layout_logo = QVBoxLayout()
+        logo_label = QLabel()
+        pixmap = QPixmap("proyecto/ICI_logo(login).png").scaled(250, 250, Qt.AspectRatioMode.KeepAspectRatio)
+        logo_label.setPixmap(pixmap)
+        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_logo.addWidget(logo_label)
+        layout_principal.addLayout(layout_logo)
+
+        # Formulario login
+        layout_login = QVBoxLayout()
+        layout_login.setContentsMargins(40, 30, 40, 30)
+
+        login_box = QWidget()
+        login_box.setStyleSheet("background-color: #3c258c; border-radius: 5px;")
+        login_layout = QVBoxLayout(login_box)
+
+        titulo = QLabel("Login")
+        titulo.setFont(QFont("Arial", 16, QFont.Weight.Bold))
+        titulo.setStyleSheet("color: white;")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.usuario_input = QLineEdit()
+        self.usuario_input.setPlaceholderText("Email")
+        self.usuario_input.setStyleSheet("padding: 5px; color: white; background-color: transparent; border: none; border-bottom: 1px solid white;")
+
+        self.contrasena_input = QLineEdit()
+        self.contrasena_input.setPlaceholderText("Password")
+        self.contrasena_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.contrasena_input.setStyleSheet("padding: 5px; color: white; background-color: transparent; border: none; border-bottom: 1px solid white;")
+
+        self.boton_login = QPushButton("Login")
+        self.boton_login.setStyleSheet("""
+            QPushButton {
+                background-color: lightgray;
+                color: #3c258c;
+                border-radius: 10px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: white;
+            }
+        """)
+        self.boton_login.clicked.connect(self.verificar_credenciales)
+
+        enlaces = QHBoxLayout()
+        crear = QLabel("<a href='#' style='color: white;'>Create an account</a>")
+        crear.setOpenExternalLinks(False)
+        recuperar = QLabel("<a href='#' style='color: white;'>Forgot password?</a>")
+        recuperar.setOpenExternalLinks(False)
+        enlaces.addWidget(crear)
+        enlaces.addSpacerItem(QSpacerItem(40, 10, QSizePolicy.Policy.Expanding))
+        enlaces.addWidget(recuperar)
+
+        login_layout.addWidget(titulo)
+        login_layout.addSpacing(10)
+        login_layout.addWidget(self.usuario_input)
+        login_layout.addWidget(self.contrasena_input)
+        login_layout.addSpacing(10)
+        login_layout.addWidget(self.boton_login)
+        login_layout.addSpacing(20)
+        login_layout.addLayout(enlaces)
+
+        layout_login.addWidget(login_box)
+        layout_principal.addLayout(layout_login)
+
+        self.setLayout(layout_principal)
+
+    def verificar_credenciales(self):
+        usuario = self.usuario_input.text()
+        contrasena = self.contrasena_input.text()
+
+        try:
+            conn = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="1234",
+                database="sistema_ventas"
+            )
+            cursor = conn.cursor()
+            query = "SELECT * FROM usuarios WHERE usuario=%s AND contraseña=%s"
+            cursor.execute(query, (usuario, contrasena))
+            resultado = cursor.fetchone()
+            conn.close()
+
+            if resultado:
+                self.ocultar_y_mostrar_dashboard()
+            else:
+                QMessageBox.warning(self, "Error", "Usuario o contraseña incorrectos.")
+
+        except mysql.connector.Error as err:
+            QMessageBox.critical(self, "Error de conexión", f"No se pudo conectar a la base de datos:\n{err}")
+
+    def ocultar_y_mostrar_dashboard(self):
+        self.hide()
+        self.dashboard = Dashboard()
+        self.dashboard.show()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    login = Login()
+    login.show()
+    sys.exit(app.exec())
+
+import sys
+import mysql.connector
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QLabel, QLineEdit, QPushButton,
+    QVBoxLayout, QHBoxLayout, QMessageBox, QSpacerItem, QSizePolicy, QFrame, QStackedLayout
+)
+from PyQt6.QtGui import QPixmap, QFont, QColor
+from PyQt6.QtCore import Qt
