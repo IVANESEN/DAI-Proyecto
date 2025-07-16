@@ -1,0 +1,17 @@
+class ProveedoresWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        titulo = QLabel("👥 Proveedores actuales")
+        titulo.setStyleSheet("color: gray; font-size: 14px;")
+        layout.addWidget(titulo)
+
+        nombre = QLabel("Vidri\nFreund")
+        nombre.setFont(QFont("Arial", 24, QFont.Weight.Bold))
+        layout.addWidget(nombre)
+
+        boton = QPushButton("Agregar")
+        boton.setStyleSheet("background-color: #1e40ff; color: white; border-radius: 8px;")
+        layout.addWidget(boton, alignment=Qt.AlignmentFlag.AlignRight)
+
+        self.setLayout(layout)
