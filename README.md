@@ -3,7 +3,7 @@ import mysql.connector
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton,
     QFrame, QLineEdit, QTableWidget, QTableWidgetItem, QSpacerItem, QSizePolicy,
-    QGraphicsDropShadowEffect, QMessageBox, QMenu
+    QGraphicsDropShadowEffect, QMessageBox, QMenu, QDialog, QFormLayout
 )
 from PyQt6.QtGui import QFont, QColor, QPixmap
 from PyQt6.QtCore import Qt
@@ -180,6 +180,45 @@ class ProveedoresWidget(CardWidget):
         boton.setFixedWidth(95)
         layout.addWidget(boton, alignment=Qt.AlignmentFlag.AlignRight)
 
+class DialogoAgregarCliente(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Agregar Cliente")
+        self.setFixedWidth(300)
+        layout = QFormLayout()
+
+        self.nombre = QLineEdit()
+        self.email = QLineEdit()
+        self.telefono = QLineEdit()
+        self.direccion = QLineEdit()
+
+        layout.addRow("Nombre:", self.nombre)
+        layout.addRow("Email:", self.email)
+        layout.addRow("Teléfono:", self.telefono)
+        layout.addRow("Dirección:", self.direccion)
+
+        self.boton_guardar = QPushButton("Guardar")
+        self.boton_guardar.clicked.connect(self.guardar_cliente)
+        layout.addRow(self.boton_guardar)
+
+        self.setLayout(layout)
+
+    def guardar_cliente(self):
+        if not self.nombre.text().strip():
+            QMessageBox.warning(self, "Validación", "El nombre es obligatorio.")
+            return
+        exito = insertar_cliente(
+            self.nombre.text().strip(),
+            self.email.text().strip(),
+            self.telefono.text().strip(),
+            self.direccion.text().strip(),
+        )
+        if exito:
+            QMessageBox.information(self, "Éxito", "Cliente agregado correctamente.")
+            self.accept()
+        else:
+            QMessageBox.critical(self, "Error", "No se pudo agregar el cliente.")
+
 class ClientesWidget(CardWidget):
     def __init__(self):
         super().__init__()
@@ -190,16 +229,14 @@ class ClientesWidget(CardWidget):
         titulo.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         layout.addWidget(titulo)
 
-        clientes = obtener_clientes()
-        filas = len(clientes)
-
-        tabla = QTableWidget(filas, 2)
-        tabla.setHorizontalHeaderLabels(["Nombre del Cliente", "Fecha de Registro"])
-        tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        tabla.verticalHeader().setVisible(False)
-        tabla.horizontalHeader().setStretchLastSection(True)
-        tabla.setShowGrid(False)
-        tabla.setStyleSheet(
+        self.tabla = QTableWidget()
+        self.tabla.setColumnCount(2)
+        self.tabla.setHorizontalHeaderLabels(["Nombre del Cliente", "Fecha de Registro"])
+        self.tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.tabla.verticalHeader().setVisible(False)
+        self.tabla.horizontalHeader().setStretchLastSection(True)
+        self.tabla.setShowGrid(False)
+        self.tabla.setStyleSheet(
             """
             QTableWidget {
                 border: none;
@@ -213,29 +250,43 @@ class ClientesWidget(CardWidget):
                 border: none;
                 padding: 4px;
             }
-        """
+            """
         )
-
-        for i, (nombre, fecha) in enumerate(clientes):
-            tabla.setItem(i, 0, QTableWidgetItem(nombre))
-            tabla.setItem(i, 1, QTableWidgetItem(fecha.strftime("%d/%m/%Y") if hasattr(fecha, 'strftime') else str(fecha)))
-
-        tabla.setFixedHeight(110 + filas*20)
-        layout.addWidget(tabla)
+        layout.addWidget(self.tabla)
 
         layout.addSpacing(4)
-        boton = QPushButton("➕ Agregar Cliente")
-        boton.setStyleSheet(
+        self.boton = QPushButton("➕ Agregar Cliente")
+        self.boton.setStyleSheet(
             """
             background-color: #F3F4F6;
             color: #1e40ff;
             border-radius: 9px;
             padding: 7px 18px;
             font-weight: 600;
-        """
+            """
         )
-        boton.setFixedWidth(160)
-        layout.addWidget(boton, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.boton.setFixedWidth(160)
+        self.boton.clicked.connect(self.mostrar_dialogo)
+        layout.addWidget(self.boton, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.cargar_clientes()
+
+    def cargar_clientes(self):
+        self.tabla.setRowCount(0)
+        clientes = obtener_clientes()
+        for i, (nombre, fecha) in enumerate(clientes):
+            self.tabla.insertRow(i)
+            self.tabla.setItem(i, 0, QTableWidgetItem(nombre))
+            # Si fecha es datetime, conviértelo a string
+            fecha_str = fecha.strftime("%d/%m/%Y") if hasattr(fecha, "strftime") else str(fecha)
+            self.tabla.setItem(i, 1, QTableWidgetItem(fecha_str))
+        # Ajusta altura si quieres:
+        self.tabla.setFixedHeight(min(300, 30 + 30 * len(clientes)))
+
+    def mostrar_dialogo(self):
+        dlg = DialogoAgregarCliente(self)
+        if dlg.exec():
+            self.cargar_clientes()
 
 class ComisionWidget(CardWidget):
     def __init__(self):
